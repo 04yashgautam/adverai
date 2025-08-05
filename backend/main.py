@@ -20,4 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"message": "Hello from FastAPI on Vercel"}
+
+@app.get("/debug")
+def debug():
+    from fastapi.routing import APIRoute
+    return {"routes": [route.path for route in app.routes if isinstance(route, APIRoute)]}
+
+
 app.include_router(charts.router)

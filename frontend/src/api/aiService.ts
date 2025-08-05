@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { AIResponse } from "@/types/AIResponse";// Use the comprehensive AIResponse interface
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "adverai-backend.vercel.app";
 
 export const getAIResponse = async (prompt: string): Promise<AIResponse> => {
   try {

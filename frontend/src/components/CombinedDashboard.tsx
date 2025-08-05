@@ -11,8 +11,6 @@ import {
   PieChart as RePieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   Area,
   AreaChart
 } from "recharts";
@@ -56,7 +54,7 @@ const GRADIENT_COLORS = [
 
 const CombinedDashboard: React.FC<CombinedDashboardProps> = ({ aiResponse }) => {
   const [activePieIndex, setActivePieIndex] = useState<number | null>(null);
-  const [selectedMetric, setSelectedMetric] = useState<string>("all");
+  // const [selectedMetric, setSelectedMetric] = useState<string>("all");
 
   const handleBackClick = () => {
     // In a real app, you'd use React Router: navigate('/prompt')

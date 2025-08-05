@@ -4,8 +4,8 @@ import axios from "axios";
 import { AIContext } from "@/context/AIContext";
 import {
   Search,
-  Mic,
-  MicOff,
+  // Mic,
+  // MicOff,
   TrendingUp,
   BarChart3,
   ArrowUp,
@@ -22,8 +22,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
   const { setAiResponse } = useContext(AIContext);
   const [typingText, setTypingText] = useState("");
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // const [isRecording, setIsRecording] = useState(false);
+  // const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
@@ -63,30 +63,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
   }, [currentPhraseIndex]);
 
   const toggleRecording = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Speech recognition not supported in this browser.");
-      return;
-    }
+    // const SpeechRecognition =
+    //   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    // if (!SpeechRecognition) {
+    //   alert("Speech recognition not supported in this browser.");
+    //   return;
+    // }
 
-    if (!isRecording) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = "en-US";
+    // if (!isRecording) {
+    //   recognitionRef.current = new SpeechRecognition();
+    //   recognitionRef.current.continuous = false;
+    //   recognitionRef.current.interimResults = false;
+    //   recognitionRef.current.lang = "en-US";
 
-      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0][0].transcript;
-        setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
-      };
+    //   recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+    //     const transcript = event.results[0][0].transcript;
+    //     setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    //   };
 
-      recognitionRef.current.start();
-      setIsRecording(true);
-    } else {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
-    }
+    //   recognitionRef.current.start();
+    //   setIsRecording(true);
+    // } else {
+    //   recognitionRef.current?.stop();
+    //   setIsRecording(false);
+    // }
   };
 
   const handleQuickAction = (query: string) => {
@@ -171,17 +171,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
           <button
             type="button"
             onClick={toggleRecording}
-            className={`p-2 rounded-full transition-all duration-200 ${
-              isRecording 
-                ? "bg-red-500/30 scale-105" 
-                : "hover:bg-white/10"
-            }`}
+            // className={`p-2 rounded-full transition-all duration-200 ${
+            //   isRecording 
+            //     ? "bg-red-500/30 scale-105" 
+            //     : "hover:bg-white/10"
+            // }`}
           >
-            {isRecording ? (
+            {/* {isRecording ? (
               <MicOff className="w-5 h-5 text-red-400" />
             ) : (
               <Mic className="w-5 h-5 text-white/70" />
-            )}
+            )} */}
           </button>
 
           {/* Generate Button */}

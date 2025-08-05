@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPGPU Fluid Simulation</title>
+    <!-- Tailwind CSS for a clean, modern look and responsive design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* Full screen, no scrollbars */
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+        }
+
+        #container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- The container for our Three.js canvas. It acts as the full-screen background. -->
+    <div id="container"></div>
+
+    <!-- Three.js Library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Use an IIFE to encapsulate the code.
+        (function() {
+            // Get the container element for our canvas.
+            const container = document.getElementById('container');
+
+            // --- Scene and Renderer Setup ---
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 4;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // --- GPGPU Setup with Frame Buffer Objects (FBO) ---
+            const size = 512;
+            
+            // FBOs allow us to render to a texture instead of the screen.
+            // We'll use two FBOs in a "ping-pong" setup to update particle positions.
+            const fbo1 = new THREE.WebGLRenderTarget(size, size, {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                depthBuffer: false,
+                stencilBuffer: false,
+            });
+            const fbo2 = fbo1.clone();
+
+            // --- Shader Definitions ---
+            // The simulation shader updates the particle positions based on a noise function.
+            const simulationVertexShader = `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `;
+            const simulationFragmentShader = `
+                varying vec2 vUv;
+                uniform sampler2D uCurrentPosition;
+                uniform sampler2D uOriginalPosition;
+                uniform float uTime;
+                uniform float uCurl;
+                uniform float uSpeed;
+
+                // Simple simplex noise function to create fluid-like motion
+                vec3 snoise(vec3 uv) {
+                    uv.x += uTime * 0.01;
+                    float s = sin(uv.z * 2.1) * 0.2 + cos(uv.y * 3.2) * 0.3 + sin(uv.x * 2.2) * 0.2;
+                    float c = cos(uv.z * 2.1) * 0.2 + sin(uv.y * 3.2) * 0.3 + cos(uv.x * 2.2) * 0.2;
+                    float s2 = sin(uv.y * 1.1) * 0.2 + cos(uv.x * 2.2) * 0.3 + sin(uv.z * 1.2) * 0.2;
+                    float c2 = cos(uv.y * 1.1) * 0.2 + sin(uv.x * 2.2) * 0.3 + cos(uv.z * 1.2) * 0.2;
+                    return vec3(s, c, s2 * c2) * uCurl;
+                }
+
+                void main() {
+                    // Read the current position of the particle from the FBO texture
+                    vec3 currentPos = texture2D(uCurrentPosition, vUv).xyz;
+                    // Read the original position of the particle (used for reference)
+                    vec3 originalPos = texture2D(uOriginalPosition, vUv).xyz;
+                    
+                    // Apply noise to the particle's position
+                    vec3 noise = snoise(currentPos * 0.1);
+                    currentPos += noise * uSpeed;
+                    
+                    // Output the new position to the FBO
+                    gl_FragColor = vec4(currentPos, 1.0);
+                }
+            `;
+
+            // The render shader uses the final particle positions to draw points on the screen.
+            const renderVertexShader = `
+                uniform sampler2D uPosition;
+                uniform float uTime;
+                varying vec3 vColor;
+
+                void main() {
+                    // Read the final position from the FBO texture
+                    vec3 pos = texture2D(uPosition, position.xy).xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    gl_PointSize = 1.5;
+                    vColor = normalize(pos) * 0.5 + 0.5;
+                }
+            `;
+            const renderFragmentShader = `
+                varying vec3 vColor;
+                void main() {
+                    gl_FragColor = vec4(vColor, 1.0);
+                }
+            `;
+
+            // --- Initializing Particles & GPGPU Textures ---
+            // Create the geometry for our particles (a Torus Knot)
+            const geometry = new THREE.TorusKnotGeometry(1.2, 0.3, 400, 32);
+            const positions = geometry.attributes.position.array;
+            const particles = new Float32Array(size * size * 4); // RGBA format
+
+            for (let i = 0; i < size * size; i++) {
+                const i4 = i * 4;
+                const p_i = (i * 3) % positions.length; // Loop through the geometry's positions
+                particles[i4 + 0] = positions[p_i + 0];
+                particles[i4 + 1] = positions[p_i + 1];
+                particles[i4 + 2] = positions[p_i + 2];
+                particles[i4 + 3] = 1.0; // Alpha
+            }
+
+            // Create a DataTexture to hold the initial positions
+            const originalPositionTexture = new THREE.DataTexture(
+                particles, size, size, THREE.RGBAFormat, THREE.FloatType
+            );
+            originalPositionTexture.needsUpdate = true;
+
+            // Initialize fbo1 with the initial particle positions
+            // We use a temporary scene and camera to render our DataTexture to the FBO.
+            const tempScene = new THREE.Scene();
+            const tempCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            const tempMaterial = new THREE.MeshBasicMaterial({ map: originalPositionTexture });
+            const tempMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), tempMaterial);
+            tempScene.add(tempMesh);
+            renderer.setRenderTarget(fbo1);
+            renderer.render(tempScene, tempCamera);
+            renderer.setRenderTarget(null);
+
+            // Create a buffer attribute for the render pass (just UV coordinates)
+            const particlePositions = new Float32Array(size * size * 3);
+            for (let i = 0; i < size * size; i++) {
+                const i3 = i * 3;
+                particlePositions[i3 + 0] = (i % size) / size;
+                particlePositions[i3 + 1] = Math.floor(i / size) / size;
+                particlePositions[i3 + 2] = 0;
+            }
+
+            // --- Main Render & Simulation Materials ---
+            const simulationMaterial = new THREE.ShaderMaterial({
+                vertexShader: simulationVertexShader,
+                fragmentShader: simulationFragmentShader,
+                uniforms: {
+                    uCurrentPosition: { value: fbo1.texture },
+                    uOriginalPosition: { value: originalPositionTexture },
+                    uTime: { value: 0 },
+                    uCurl: { value: 1.5 },
+                    uSpeed: { value: 0.01 },
+                },
+            });
+            
+            const renderMaterial = new THREE.ShaderMaterial({
+                vertexShader: renderVertexShader,
+                fragmentShader: renderFragmentShader,
+                uniforms: {
+                    uPosition: { value: fbo1.texture },
+                    uTime: { value: 0 },
+                },
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+            });
+            
+            // --- The Point Cloud for Rendering ---
+            const renderGeometry = new THREE.BufferGeometry();
+            renderGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            
+            const points = new THREE.Points(renderGeometry, renderMaterial);
+            scene.add(points);
+            
+            // --- Animation Loop ---
+            const clock = new THREE.Clock();
+
+            // Setup a separate scene and camera for the simulation pass
+            const simulationScene = new THREE.Scene();
+            const simulationCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            const simulationPlane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simulationMaterial);
+            simulationScene.add(simulationPlane);
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                // --- GPGPU Simulation Pass ---
+                // Update simulation uniforms
+                simulationMaterial.uniforms.uCurrentPosition.value = fbo1.texture;
+                simulationMaterial.uniforms.uOriginalPosition.value = originalPositionTexture;
+                simulationMaterial.uniforms.uTime.value = clock.getElapsedTime();
+
+                // Render the simulation to the second FBO
+                renderer.setRenderTarget(fbo2);
+                renderer.render(simulationScene, simulationCamera);
+
+                // Swap the FBOs (ping-pong)
+                let temp = fbo1.texture;
+                fbo1.texture = fbo2.texture;
+                fbo2.texture = temp;
+
+                // --- Main Render Pass ---
+                // Update render uniforms with the new positions
+                renderMaterial.uniforms.uPosition.value = fbo1.texture;
+                renderMaterial.uniforms.uTime.value = clock.getElapsedTime();
+
+                // Rotate the points
+                points.rotation.y += 0.001;
+                points.rotation.x += 0.0005;
+
+                // Render the main scene to the screen
+                renderer.setRenderTarget(null);
+                renderer.render(scene, camera);
+            }
+
+            // --- Window Events ---
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // Start the animation loop when the window has fully loaded
+            window.onload = function() {
+                animate();
+            };
+        })();
+    </script>
+</body>
+</html>

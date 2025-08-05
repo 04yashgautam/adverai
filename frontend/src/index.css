@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------
+   TYPOGRAPHY & BRAND
+-------------------- */
+@layer utilities {
+  .font-display {
+    font-family: 'Inter', 'SF Pro Display', 'Segoe UI', sans-serif;
+  }
+}
+
+/* --------------------
+   THEME VARIABLES
+-------------------- */
+@layer base {
+  :root {
+    /* Neutral Backgrounds */
+    --background: 0 0% 100%;
+    --background-secondary: 220 14% 97%;
+    --background-tertiary: 220 10% 94%;
+    --foreground: 222 16% 15%;
+    --foreground-secondary: 222 8% 46%;
+
+    /* Brand & Accent Colors (Balanced for Contrast) */
+    --primary: 226 85% 55%; /* Deep Indigo */
+    --primary-dark: 226 85% 45%;
+    --primary-foreground: 0 0% 100%;
+    --accent-purple: 270 85% 65%;
+    --accent-teal: 170 65% 45%;
+    --accent-pink: 330 75% 58%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(226 85% 55%), hsl(270 85% 65%), hsl(170 65% 45%));
+    --gradient-card: linear-gradient(135deg, hsl(220 14% 97%), hsl(0 0% 100%));
+    --gradient-button: linear-gradient(90deg, hsl(226 85% 55%), hsl(270 85% 65%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px hsl(222 10% 10% / 0.06);
+    --shadow-md: 0 4px 12px hsl(222 10% 10% / 0.08);
+    --shadow-lg: 0 8px 24px hsl(222 10% 10% / 0.12);
+    --shadow-glow: 0 0 20px hsl(226 85% 55% / 0.4);
+
+    /* Radius */
+    --radius: 0.75rem;
+  }
+
+  /* Dark Mode */
+  .dark {
+    --background: 222 16% 12%;
+    --background-secondary: 222 14% 16%;
+    --background-tertiary: 222 12% 22%;
+    --foreground: 0 0% 100%;
+    --foreground-secondary: 220 8% 70%;
+    --primary: 226 85% 65%;
+    --primary-dark: 226 85% 58%;
+    --gradient-card: linear-gradient(135deg, hsl(222 16% 12%), hsl(222 12% 22%));
+  }
+}
+
+/* --------------------
+   GLOBAL STYLES
+-------------------- */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans overflow-x-hidden;
+    background-color: hsl(var(--background));
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+}
+
+/* --------------------
+   COMPONENTS
+-------------------- */
+@layer components {
+  /* Glass Card */
+  .glass-card {
+    @apply rounded-xl border backdrop-blur-md p-4 transition-all duration-300;
+    background: hsl(var(--background-secondary) / 0.75);
+    border-color: hsl(var(--background-tertiary));
+    box-shadow: var(--shadow-md);
+  }
+  .glass-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Gradient Button */
+  .glass-button {
+    @apply px-5 py-2 rounded-lg font-medium text-white transition-all duration-300;
+    background: var(--gradient-button);
+    box-shadow: var(--shadow-md);
+  }
+  .glass-button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Sidebar Items */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ease-out;
+    background: transparent;
+    color: hsl(var(--foreground-secondary));
+    position: relative;
+  }
+  .sidebar-item:hover {
+    background: hsl(var(--background-tertiary) / 0.9);
+    color: hsl(var(--foreground));
+    transform: translateX(5px);
+    box-shadow: 0 4px 10px hsl(var(--primary) / 0.08);
+  }
+  .sidebar-item.active {
+    background: var(--gradient-button);
+    color: white;
+    box-shadow: 0 4px 15px hsl(var(--primary) / 0.25);
+    transform: translateX(5px);
+  }
+  .sidebar-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 3px;
+    border-radius: 2px;
+    background: transparent;
+    transition: all 0.3s ease;
+  }
+  .sidebar-item.active::before {
+    background: hsl(var(--primary));
+  }
+  .sidebar-item:hover::before {
+    background: hsl(var(--primary) / 0.5);
+  }
+
+  /* Dashboard Cards */
+  .dashboard-card {
+    @apply p-6 rounded-xl border;
+    background: hsl(var(--background-secondary));
+    border-color: hsl(var(--background-tertiary));
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Visualization Hub Cards */
+  .viz-card {
+    @apply glass-card cursor-pointer;
+    transform-style: preserve-3d;
+  }
+  .viz-card:hover {
+    transform: translateY(-8px) rotateX(2deg);
+  }
+}
+
+/* --------------------
+   UTILITIES
+-------------------- */
+@layer utilities {
+  .text-gradient {
+    background: var(--gradient-button);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+}

@@ -1,26 +1,14 @@
 import axios from "axios";
+import type { AIResponse } from "@/types/AIResponse";// Use the comprehensive AIResponse interface
 
-export interface AIResponse {
-  // Define the structure of your AI response here. 
-  // For example:
-  // query: string;
-  // chart_data: any;
-  // summary: string;
-  // Add other fields as per your backend response.
-  query: string;
-  chart_data: {
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-      borderColor?: string;
-      backgroundColor?: string;
-    }[];
-  };
-  summary: string;
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export const getAIResponse = async (prompt: string): Promise<AIResponse> => {
-  const res = await axios.post<AIResponse>("http://localhost:8000/query", { user_prompt: prompt });
-  return res.data;
+  try {
+    const res = await axios.post<AIResponse>(`${API_BASE_URL}/query`, { user_prompt: prompt });
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching AI response:", error);
+    throw new Error("Failed to fetch AI response from the server.");
+  }
 };

@@ -281,7 +281,7 @@ const CombinedDashboard: React.FC<CombinedDashboardProps> = ({ aiResponse }) => 
                     onMouseEnter={(_, i) => setActivePieIndex(i)}
                     onMouseLeave={() => setActivePieIndex(null)}
                   >
-                    {pieData.map((entry, index) => (
+                    {pieData.map((_, index) => (
                       <Cell
                         key={index}
                         fill={index === 0 ? "url(#spendSlice)" : "url(#revenueSlice)"}

@@ -19,3 +19,15 @@ export interface AIResponse {
   summary?: string;
   line_chart_data?: { date: string; impressions: number }[];
 }
+
+// export async function getAIResponse(prompt: string): Promise<AIResponse> {
+//   // Example response using the prompt
+//   console.log(`Received prompt: ${prompt}`);
+//   return {
+//     metrics: [],
+//     visualizations: [], // Ensure this property is included
+//     data: [],
+//     summary: "Example summary",
+//     line_chart_data: [],
+//   };
+// }

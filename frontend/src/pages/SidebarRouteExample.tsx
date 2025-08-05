@@ -1,5 +1,6 @@
-import React, { useState } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import { useState } from "react";
+
 
 const SidebarRouteExample = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);

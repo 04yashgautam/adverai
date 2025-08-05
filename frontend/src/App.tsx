@@ -77,9 +77,7 @@
 // }
 
 
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HeroSection from "@/components/HeroSection";
 import ResultsPage from "@/pages/ResultsPage";
 import { AIProvider } from "@/context/AIContext";
 import LandingPage from "./pages/LandingPage";

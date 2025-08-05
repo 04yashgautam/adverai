@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext} from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { AIContext } from "@/context/AIContext";
+import { AIContext } from "@/context/AIContextDefinition";
+import { getAIResponse } from "@/api/aiService";
 import {
   Search,
-  // Mic,
-  // MicOff,
   TrendingUp,
   BarChart3,
   ArrowUp,
 } from "lucide-react";
 import heroImage from "@/assets/hero-bg.jpg";
+
 
 interface HeroSectionProps {
   prompt: string;
@@ -19,26 +18,27 @@ interface HeroSectionProps {
 
 const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
   const navigate = useNavigate();
-  const { setAiResponse } = useContext(AIContext);
+  const aiContext = useContext(AIContext);
+  if (!aiContext) {
+    throw new Error("AIContext must be used within an AIContextProvider");
+  }
+  const { setAiResponse } = aiContext;
   const [typingText, setTypingText] = useState("");
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  // const [isRecording, setIsRecording] = useState(false);
-  // const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
-  const phrases = [
+  const phrases = React.useMemo(() => [
     "Show me impression trend on 5th July",
     "Analyze performance",
     "Create performance report",
-  ];
+  ], []);
 
   const quickActions = [
     { icon: BarChart3, label: "Performance", query: "Show me yesterday's ROAS rate" },
     { icon: TrendingUp, label: "Trends", query: "Show me the impressions up until now" },
   ];
 
-  // Typing effect - smoother timing
   useEffect(() => {
     const currentPhrase = phrases[currentPhraseIndex];
     let charIndex = 0;
@@ -60,34 +60,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
     }, isDeleting ? 50 : 100);
 
     return () => clearInterval(typeInterval);
-  }, [currentPhraseIndex]);
+  }, [currentPhraseIndex, phrases]);
 
-  const toggleRecording = () => {
-    // const SpeechRecognition =
-    //   (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    // if (!SpeechRecognition) {
-    //   alert("Speech recognition not supported in this browser.");
-    //   return;
-    // }
-
-    // if (!isRecording) {
-    //   recognitionRef.current = new SpeechRecognition();
-    //   recognitionRef.current.continuous = false;
-    //   recognitionRef.current.interimResults = false;
-    //   recognitionRef.current.lang = "en-US";
-
-    //   recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-    //     const transcript = event.results[0][0].transcript;
-    //     setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
-    //   };
-
-    //   recognitionRef.current.start();
-    //   setIsRecording(true);
-    // } else {
-    //   recognitionRef.current?.stop();
-    //   setIsRecording(false);
-    // }
-  };
+  // const toggleRecording = () => {
+  //   // ... (unchanged)
+  // };
 
   const handleQuickAction = (query: string) => {
     setPrompt(query);
@@ -101,12 +78,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8000/query", {
-        user_prompt: prompt,
-      });
-
-      setAiResponse(res.data);
-
+      const res = await getAIResponse(prompt);
+      setAiResponse(res);
       setTimeout(() => {
         setLoading(false);
         navigate("/results");
@@ -119,7 +92,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-      {/* Background */}
       <div
         className="absolute inset-0"
         style={{
@@ -130,13 +102,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
           transform: "scale(1.02)",
         }}
       />
-
-      {/* Overlay - improved gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a2e]/95 via-[#1a1a2e]/90 to-[#0f0f1a]/95 backdrop-blur-sm" />
-
-      {/* Content - better positioning */}
       <div className="relative z-10 w-full max-w-5xl text-center">
-        {/* Title - improved spacing and animation */}
         <div className="mb-12">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
             <span className="block text-white mb-2">
@@ -146,13 +113,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
               Hidden Stories with AI
             </span>
           </h1>
-
           <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
             Ask questions in natural language and watch as AI instantly transforms your data into beautiful, actionable insights.
           </p>
         </div>
-
-        {/* Prompt Input - keeping original */}
         <form
           onSubmit={handleSubmit}
           className="max-w-3xl mx-auto flex items-center gap-2 p-2 bg-white/5 border border-white/10 rounded-full mb-8"
@@ -166,25 +130,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
             placeholder={`Try asking: "${typingText}"`}
             className="flex-1 bg-transparent outline-none text-white px-2 placeholder-white/60"
           />
-
-          {/* Voice Button */}
           <button
             type="button"
-            onClick={toggleRecording}
-            // className={`p-2 rounded-full transition-all duration-200 ${
-            //   isRecording 
-            //     ? "bg-red-500/30 scale-105" 
-            //     : "hover:bg-white/10"
-            // }`}
+            // onClick={toggleRecording}
           >
-            {/* {isRecording ? (
-              <MicOff className="w-5 h-5 text-red-400" />
-            ) : (
-              <Mic className="w-5 h-5 text-white/70" />
-            )} */}
           </button>
-
-          {/* Generate Button */}
           <button
             type="submit"
             disabled={!prompt.trim() || loading}
@@ -197,8 +147,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
             )}
           </button>
         </form>
-
-        {/* Quick Actions - better positioning and subtle animation */}
         <div className="flex flex-wrap justify-center gap-3 mb-16">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
@@ -217,8 +165,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
           })}
         </div>
       </div>
-
-      {/* Bottom Note - better positioning */}
       <div className="absolute bottom-6 left-0 right-0 text-center px-6">
         <div className="max-w-4xl mx-auto">
           <p className="text-sm text-white/60 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10">

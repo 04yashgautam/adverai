@@ -1,22 +1,10 @@
-// context/AIContext.tsx
-import React, { createContext, useState } from "react";
 
-interface AIContextType {
-  aiResponse: any;
-  setAiResponse: (res: any) => void;
-  globalLoading: boolean;
-  setGlobalLoading: (val: boolean) => void;
-}
-
-export const AIContext = createContext<AIContextType>({
-  aiResponse: null,
-  setAiResponse: () => {},
-  globalLoading: false,
-  setGlobalLoading: () => {},
-});
+import React, { useState } from "react";
+import { AIContext } from "./AIContextDefinition"; // Ensure the file './AIContextDefinition.ts' exists in the same directory
+import type { AIResponse } from "@/types/AIResponse";
 
 export const AIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [aiResponse, setAiResponse] = useState<any>(null);
+  const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false);
 
   return (

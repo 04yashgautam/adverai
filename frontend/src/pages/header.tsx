@@ -14,7 +14,8 @@ export function Header() {
     { name: "Pricing", href: "#pricing-section" },
   ];
 
-  const handleScroll = (e, href) => {
+
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, href: string): void => {
     e.preventDefault();
     const targetId = href.substring(1);
     const targetElement = document.getElementById(targetId);

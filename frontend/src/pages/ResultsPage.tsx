@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
-import { AIContext } from "@/context/AIContext";
+import { AIContext } from "@/context/AIContextDefinition";
 import CombinedDashboard from "@/components/CombinedDashboard";
 
 const ResultsPage: React.FC = () => {
-  const { aiResponse } = useContext(AIContext);
+  const { aiResponse } = useContext(AIContext) || {};
   const [showContent, setShowContent] = useState(false);
 
   // Optional delay for fade-in effect

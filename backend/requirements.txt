@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 pymongo
-traceback
 textwrap
 re
 dotenv

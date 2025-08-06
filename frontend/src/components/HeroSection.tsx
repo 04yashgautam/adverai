@@ -168,7 +168,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ prompt, setPrompt }) => {
       <div className="absolute bottom-6 left-0 right-0 text-center px-6">
         <div className="max-w-4xl mx-auto">
           <p className="text-sm text-white/60 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10">
-            <span className="font-medium">Note:</span> The request may not work because of rate limitations by the API's server. 
+            <span className="font-medium">Note:</span> The request may not work because of rate limitations by the OpenRouter API's server. 
             Try again if needed (Free Plan limitations).
           </p>
         </div>

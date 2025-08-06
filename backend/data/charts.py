@@ -114,7 +114,11 @@ def process_query(user_prompt: str = Body(..., embed=True)):
         }
 
         models = [
-            "qwen/qwen3-coder:free",
+            "deepseek/deepseek-r1-0528-qwen3-8b:free",
+            "mistralai/mistral-small-3.2-24b-instruct:free",
+            "openrouter/horizon-beta",
+            # "qwen/qwen3-coder:free",
+
         ]
 
         config = None
@@ -154,6 +158,7 @@ def process_query(user_prompt: str = Body(..., embed=True)):
                 continue
 
         if not config:
+            print("FALL BACK DATA")
             return _fallback_data()
 
         # Handle date filter
